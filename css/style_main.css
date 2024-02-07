@@ -59,7 +59,7 @@ p {
 .email {
 	display: flex;
 	justify-content: center;
-	gap: 50px;
+	gap: 0px;
 	padding: 0px 0;
 }
 
