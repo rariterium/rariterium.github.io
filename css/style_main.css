@@ -56,7 +56,7 @@ p {
 	cursor: pointer;
 }
 
-.footer {
+.email {
 	display: flex;
 	justify-content: center;
 	gap: 50px;
