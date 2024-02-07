@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>Volgatti</title>
+	
+		<link rel="stylesheet" type="text/css" href="../css/style1.css">
+	
+		
+	</head>
+	<body>
+
+		<script src="./../js_loader_r127/fflate.min.js"></script>
+		<script src="./../js_loader_r127/three.min.js"></script>		
+		<script src="./../js_loader_r127/OrbitControls.js"></script>		
+		<script src="./../js_loader_r127/FBXLoader.js"></script>
+		<script src="./../js_loader_r127/dat.gui.min.js"></script>
+
+		<script src="./../js/material.js"></script>
+		
+
+
+		<div id="preloader" class="preloader"> 
+			<div class="preloader__content">				
+				<div class="preloader__first"></div>
+				<div class="preloader__second"></div>
+				<div class="preloader__third"></div>  
+			</div>
+		</div>
+
+
+			<div class="container">
+				<div class="items">
+					<div class="item">						
+						<canvas id="canvas1" class="none1"></canvas>											
+						<div id="pered" class="text">передняя часть</div>
+					</div>
+					<div class="item">
+						<canvas id="canvas2"></canvas>										
+						<div class="text">задняя часть</div>
+					</div>
+					<div class="item">					
+						<canvas id="canvas3"></canvas>										
+						<div class="text">диски</div>
+					</div>
+				</div>
+			</div>
+
+      			 <!--<canvas id="color-picker"></canvas>
+      			 
+      			 <div class="info">
+         
+       			 <div class="selected"><h3>Color</h3> </div>
+       			</div> -->
+ 		  	  
+   			
+				
+
+		<script>
+			let manager = new THREE.LoadingManager();						
+				manager.onLoad = function () {
+					let preloader = document.getElementById('preloader');
+					preloader.style.display = 'none';
+				};
+				
+
+			let camera, scene, renderer;
+			let light, controls;	
+
+					
+			init();
+			animate();
+
+			function init() {
+
+				container = document.createElement( 'div' );
+				document.body.appendChild( container );
+
+				// scene
+				scene = new THREE.Scene();
+				scene.background = new THREE.Color( 0xcce0ff );
+				scene.fog = new THREE.Fog( 0xcce0ff, 500, 5000 );
+
+				const textureLoader = new THREE.TextureLoader(manager);
+
+				textureEquirec = textureLoader.load( './../img/street.jpg' );
+				textureEquirec.mapping = THREE.EquirectangularReflectionMapping;
+				textureEquirec.encoding = THREE.sRGBEncoding;
+
+				// camera
+				camera = new THREE.PerspectiveCamera( 30, window.innerWidth / window.innerHeight, 1, 3000 );
+				
+				// lights 
+				scene.add( new THREE.AmbientLight( 0x666666 ) );
+
+				light = new THREE.DirectionalLight( 0xffffff, 1 );
+				light.position.set( 100, 300, 0 );
+				light.position.multiplyScalar( 1.3 );
+				light.castShadow = true;
+				light.shadow.mapSize.width = 2048;
+				light.shadow.mapSize.height = 2048;
+				const d = 700;
+				light.shadow.camera.left = - d;
+				light.shadow.camera.right = d;
+				light.shadow.camera.top = d;
+				light.shadow.camera.bottom = - d;
+				light.shadow.camera.far = 1000;
+				scene.add( light );
+
+				//ground
+				//let planeMaterial = new THREE.MeshLambertMaterial({color: 0xaaaaaa});
+				let plane = new THREE.Mesh( new THREE.PlaneGeometry( 20000, 20000 ), planeMaterial );
+				plane.position.y = 0;
+				plane.rotation.x = - Math.PI / 2;
+				plane.receiveShadow = true;
+				scene.add( plane );
+
+				const grid = new THREE.GridHelper( 20000, 200, 0x000000, 0x000000 );
+				grid.material.opacity = 0.2;
+				grid.material.transparent = true;
+				scene.add( grid );
+
+
+				
+				//model
+				let meshes = [];
+				let fbxLoader = new THREE.FBXLoader(manager);
+				fbxLoader.load('./../fbx/volgatti.fbx', function (object) {
+					
+					object.traverse( function ( child ) {
+					if ( child instanceof THREE.Mesh )
+						{
+							meshes.push( child );
+							child.receiveShadow = true;
+               				child.castShadow = true;
+						}
+					});	
+
+
+
+
+					meshes[11].material = metallMaterial;
+					meshes[9].material = windowsMaterial;	
+					meshes[4].material = rezinaMaterial;
+					meshes[10].material = fara_krasnayMaterial;
+					meshes[5].material = kuzovMaterial;
+					meshes[0].material = kuzov2Material;
+					meshes[7].material = fara_perednayMaterial;
+					meshes[6].material = tormozaMaterial;
+					meshes[1].material = zerkaloMaterial;
+					meshes[8].material = bakyMaterial;
+					meshes[2].material = plastikMaterial;
+					meshes[3].material = diskiMaterial;					
+					
+					console.log(meshes)
+					//ADD SCENE
+
+					for ( let i = 0; i <= meshes.length; i++){
+						scene.add(meshes[i]);
+					}
+					});	
+/*class Picker {
+  constructor(target, width, height) {
+    this.target = target;
+    this.width = width;
+    this.height = height;
+    this.target.width = width;
+    this.target.height = height;
+    //Get context 
+    this.context = this.target.getContext("2d");
+    //Circle 
+    this.pickerCircle = { x: 0, y: 0, width: 7, height:7};
+    
+    this.listenForEvents();
+  }
+  
+  draw() {
+    this.build();
+  }
+  
+  build() {
+    let gradient = this.context.createLinearGradient(0, 0, this.width, 0);
+
+    //Color Stops
+    gradient.addColorStop(0, "rgb(255, 0, 0)");
+    gradient.addColorStop(0.15, "rgb(255, 0, 255)");
+    gradient.addColorStop(0.33, "rgb(0, 0, 255)");
+    gradient.addColorStop(0.49, "rgb(0, 255, 255)");
+    gradient.addColorStop(0.67, "rgb(0, 255, 0)");
+    gradient.addColorStop(0.84, "rgb(255, 255, 0)");
+    gradient.addColorStop(1, "rgb(255, 0, 0)");
+    //Fill it
+    this.context.fillStyle = gradient;
+    this.context.fillRect(0, 0, this.width, this.height);
+    
+    //Apply black and white 
+        gradient = this.context.createLinearGradient(0, 0, 0,          this.height);
+    gradient.addColorStop(0, "rgba(255, 255, 255, 1)");
+    gradient.addColorStop(0.5, "rgba(255, 255, 255, 0)");
+    gradient.addColorStop(0.5, "rgba(0, 0, 0, 0)");
+    gradient.addColorStop(1, "rgba(0, 0, 0, 1)");
+    this.context.fillStyle = gradient;
+    this.context.fillRect(0, 0, this.width, this.height);
+    
+    //Circle 
+    this.context.beginPath();
+    this.context.arc(this.pickerCircle.x, this.pickerCircle.y, this.pickerCircle.width, 0, Math.PI * 2);
+    this.context.strokeStyle = "black";
+    this.context.stroke();
+    this.context.closePath();
+    
+  }
+  
+  listenForEvents() {
+    let isMouseDown = false;
+    const onMouseDown = (e) => {
+      let currentX = e.clientX - this.target.offsetLeft;
+      let currentY = e.clientY - this.target.offsetTop;
+      if(currentY > this.pickerCircle.y && currentY < this.pickerCircle.y + this.pickerCircle.width && currentX > this.pickerCircle.x && currentX < this.pickerCircle.x + this.pickerCircle.width) {
+        isMouseDown = true;
+      } else {
+        this.pickerCircle.x = currentX;
+        this.pickerCircle.y = currentY;
+      }
+    }
+    
+    const onMouseMove = (e) => {
+      if(isMouseDown) {
+       let currentX = e.clientX - this.target.offsetLeft;
+       let currentY = e.clientY - this.target.offsetTop;
+        this.pickerCircle.x = currentX;
+        this.pickerCircle.y = currentY;
+      }
+    }
+    
+    const onMouseUp = () => {
+      isMouseDown = false;
+    }
+   
+    //Register 
+    this.target.addEventListener("mousedown", onMouseDown);
+    this.target.addEventListener("mousemove", onMouseMove);
+    this.target.addEventListener("mousemove", () => this.onChangeCallback(this.getPickedColor()));
+
+    
+    document.addEventListener("mouseup", onMouseUp);
+  }
+  
+  getPickedColor() {
+    let imageData = this.context.getImageData(this.pickerCircle.x, this.pickerCircle.y, 1, 1);
+    return { r: imageData.data[0], g: imageData.data[1], b: imageData.data[2] };
+  }
+  
+  onChange(callback) {
+    this.onChangeCallback = callback;
+  }
+  
+  
+}
+
+let picker = new Picker(document.getElementById("color-picker"), 200, 80);
+
+//Draw 
+setInterval(() => picker.draw(), 1);
+
+picker.onChange((color) => {
+   let selected = document.getElementsByClassName("selected")[0];
+  selected.style.backgroundColor = `rgb(${color.r}, ${color.g}, ${color.b})`;
+  kuzov2Material.color.r = color.r/255;
+  kuzov2Material.color.g = color.g/255;
+  kuzov2Material.color.b = color.b/255;
+  console.log(kuzovMaterial);
+});*/
+
+width  = 200;
+height = 100;
+
+const canvas = document.getElementById("canvas1");
+const pered = document.getElementById("pered");
+const context = canvas.getContext("2d");
+
+
+canvas.width = width;
+canvas.height = height;
+
+let gradient = context.createLinearGradient(0, 0, canvas.width, 0);
+
+    //Color Stops
+    gradient.addColorStop(0, "rgb(255, 0, 0)");
+    gradient.addColorStop(0.15, "rgb(255, 0, 255)");
+    gradient.addColorStop(0.33, "rgb(0, 0, 255)");
+    gradient.addColorStop(0.49, "rgb(0, 255, 255)");
+    gradient.addColorStop(0.67, "rgb(0, 255, 0)");
+    gradient.addColorStop(0.84, "rgb(255, 255, 0)");
+    gradient.addColorStop(1, "rgb(255, 0, 0)");
+    //Fill it
+    context.fillStyle = gradient;
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    
+    //Apply black and white 
+    gradient = context.createLinearGradient(0, 0, 0, canvas.height);
+    gradient.addColorStop(0.05, "rgba(255, 255, 255, 1)");
+    gradient.addColorStop(0.5, "rgba(255, 255, 255, 0)");
+    gradient.addColorStop(0.5, "rgba(0, 0, 0, 0)");
+    gradient.addColorStop(0.95, "rgba(0, 0, 0, 1)");
+    context.fillStyle = gradient;
+    context.fillRect(0, 0, canvas.width, canvas.height);
+
+
+    const mouse = {
+    	x: 0,
+    	y: 0,
+    //	left: false,
+    //	right: false,
+    }
+  /*  canvas.addEventListener("mousemove", (event) => {
+    	//const circle = canvas.getBoundingClientRect();
+    	//mouse.x = event.clientX - circle.left;
+    	//mouse.y = event.clientY - circle.top;
+    	
+    }*/
+/*    canvas.addEventListener("mousemove", (event) => {
+    	const rectmove = canvas.getBoundingClientRect();
+    	mouse.x = event.clientX - rectmove.left;
+    	mouse.y = event.clientY - rectmove.top;
+    	context.beginPath();
+    	context.arc(mouse.x,mouse.y, 5, 0, Math.PI * 2); 
+    	context.fillStyle = "red";
+    	context.fill();
+
+    	let imageDataMove=context.getImageData(mouse.x,mouse.y,1,1);
+  		
+    	pered.style.backgroundColor = `rgb(${imageDataMove.data[0]}, ${imageDataMove.data[1]}, ${imageDataMove.data[2]})`;
+    });*/
+
+    canvas.addEventListener("mousedown", (event) => {
+    	const rect = canvas.getBoundingClientRect();
+    	mouse.x = event.clientX - rect.left;
+    	mouse.y = event.clientY - rect.top;
+    	/*context.beginPath();
+    	context.arc(mouse.x,mouse.y, 5, 0, Math.PI * 2); 
+    	context.fillStyle = "red";
+    	context.fill();*/
+
+    	let imageData=context.getImageData(mouse.x,mouse.y,1,1);
+  		
+    	//console.log(imageData.data[0],imageData.data[1],imageData.data[2]);
+  		//let color = (parseInt(`${imageData.data[0]}${imageData.data[1]}${imageData.data[2]}`));
+  		console.log("цвет 1");
+  		console.log(imageData.data[0]/255);
+  		console.log(imageData.data[1]/255);
+  		console.log(imageData.data[2]/255);
+  		
+
+  		kuzovMaterial.color.r = imageData.data[0]/255;
+		kuzovMaterial.color.g = imageData.data[1]/255;
+        kuzovMaterial.color.b = imageData.data[2]/255;
+    	//console.log(mouse.x,mouse.y);
+    	//console.log(event);
+    });
+
+
+    const canvas2 = document.getElementById("canvas2");
+const context2 = canvas2.getContext("2d");
+
+canvas2.width = width;
+canvas2.height = height;
+
+let gradient2 = context2.createLinearGradient(0, 0, canvas2.width, 0);
+
+    //Color Stops
+    gradient2.addColorStop(0, "rgb(255, 0, 0)");
+    gradient2.addColorStop(0.15, "rgb(255, 0, 255)");
+    gradient2.addColorStop(0.33, "rgb(0, 0, 255)");
+    gradient2.addColorStop(0.49, "rgb(0, 255, 255)");
+    gradient2.addColorStop(0.67, "rgb(0, 255, 0)");
+    gradient2.addColorStop(0.84, "rgb(255, 255, 0)");
+    gradient2.addColorStop(1, "rgb(255, 0, 0)");
+    //Fill it
+    context2.fillStyle = gradient2;
+    context2.fillRect(0, 0, canvas2.width, canvas2.height);
+    
+    //Apply black and white 
+    gradient2 = context2.createLinearGradient(0, 0, 0, canvas2.height);
+    gradient2.addColorStop(0.05, "rgba(255, 255, 255, 1)");
+    gradient2.addColorStop(0.5, "rgba(255, 255, 255, 0)");
+    gradient2.addColorStop(0.5, "rgba(0, 0, 0, 0)");
+    gradient2.addColorStop(0.95, "rgba(0, 0, 0, 1)");
+    context2.fillStyle = gradient2;
+    context2.fillRect(0, 0, canvas2.width, canvas2.height);
+
+
+    const mouse2 = {
+    	x: 0,
+    	y: 0,
+    //	left: false,
+    //	right: false,
+    }
+    canvas2.addEventListener("mousedown", (event) => {
+    	const rect2 = canvas2.getBoundingClientRect();
+    	mouse2.x = event.clientX - rect2.left;
+    	mouse2.y = event.clientY - rect2.top;
+
+    	let imageData2=context.getImageData(mouse2.x,mouse2.y,1,1);
+  		
+    	//console.log(imageData.data[0],imageData.data[1],imageData.data[2]);
+  		//let color = (parseInt(`${imageData.data[0]}${imageData.data[1]}${imageData.data[2]}`));
+  		console.log("цвет 2");
+  		console.log(imageData2.data[0]/255);
+  		console.log(imageData2.data[1]/255);
+  		console.log(imageData2.data[2]/255);
+
+  		kuzov2Material.color.r = imageData2.data[0]/255;
+		kuzov2Material.color.g = imageData2.data[1]/255;
+        kuzov2Material.color.b = imageData2.data[2]/255;
+    	//console.log(mouse.x,mouse.y);
+    	//console.log(event);
+    });
+
+     const canvas3 = document.getElementById("canvas3");
+const context3 = canvas3.getContext("2d");
+
+canvas3.width = width;
+canvas3.height = height;
+
+let gradient3 = context3.createLinearGradient(0, 0, canvas3.width, 0);
+
+    //Color Stops
+    gradient3.addColorStop(0, "rgb(255, 0, 0)");
+    gradient3.addColorStop(0.15, "rgb(255, 0, 255)");
+    gradient3.addColorStop(0.33, "rgb(0, 0, 255)");
+    gradient3.addColorStop(0.49, "rgb(0, 255, 255)");
+    gradient3.addColorStop(0.67, "rgb(0, 255, 0)");
+    gradient3.addColorStop(0.84, "rgb(255, 255, 0)");
+    gradient3.addColorStop(1, "rgb(255, 0, 0)");
+    //Fill it
+    context3.fillStyle = gradient3;
+    context3.fillRect(0, 0, canvas3.width, canvas3.height);
+    
+    //Apply black and white 
+    gradient3 = context2.createLinearGradient(0, 0, 0, canvas3.height);
+    gradient3.addColorStop(0.05, "rgba(255, 255, 255, 1)");
+    gradient3.addColorStop(0.5, "rgba(255, 255, 255, 0)");
+    gradient3.addColorStop(0.5, "rgba(0, 0, 0, 0)");
+    gradient3.addColorStop(0.95, "rgba(0, 0, 0, 1)");
+    context3.fillStyle = gradient3;
+    context3.fillRect(0, 0, canvas3.width, canvas3.height);
+
+
+    const mouse3 = {
+    	x: 0,
+    	y: 0,
+    //	left: false,
+    //	right: false,
+    }
+    canvas3.addEventListener("mousedown", (event) => {
+    	const rect3 = canvas3.getBoundingClientRect();
+    	mouse3.x = event.clientX - rect3.left;
+    	mouse3.y = event.clientY - rect3.top;
+
+    	let imageData3=context.getImageData(mouse3.x,mouse3.y,1,1);
+  		
+    	//console.log(imageData.data[0],imageData.data[1],imageData.data[2]);
+  		//let color = (parseInt(`${imageData.data[0]}${imageData.data[1]}${imageData.data[2]}`));
+  		console.log("цвет 3");
+  		console.log(imageData3.data[0]/255);
+  		console.log(imageData3.data[1]/255);
+  		console.log(imageData3.data[2]/255);
+
+  		diskiMaterial.color.r = imageData3.data[0]/255;
+		diskiMaterial.color.g = imageData3.data[1]/255;
+        diskiMaterial.color.b = imageData3.data[2]/255;
+    	//console.log(mouse.x,mouse.y);
+    	//console.log(event);
+    });
+
+
+/*
+
+					const domColors = document.querySelector(".items-color");
+					const domColors1 = document.querySelector(".items-color1");
+					const domColors2 = document.querySelector(".items-color2");
+					const colors = [
+"000000", "110000", "220000", "330000", "440000", "550000", "660000", "770000", "880000", "990000", 
+"aa0000", "bb0000", "cc0000", "dd0000", "ee0000", "ff0000", "ff1111", "ff2222", "ff3333", "ff4444", 
+"ff5555", "ff6666", "ff7777", "ff8888", "ff9999", "ffaaaa", "ffbbbb", "ffcccc", "ffdddd", "ffeeee", 
+"ffffff",
+"000000", "110011", "220022", "330033", "440044", "550055", "660066", "770077", "880088", "990099", 
+"aa00aa", "bb00bb", "cc00cc", "dd00dd", "ee00ee", "ff00ff", "ff11ff", "ff22ff", "ff33ff", "ff44ff", 
+"ff55ff", "ff66ff", "ff77ff", "ff88ff", "ff99ff", "ffaaff", "ffbbff", "ffccff", "ffddff", "ffeeff", 
+"ffffff",
+"000000", "000011", "000022", "000033", "000044", "000055", "000066", "000077", "000088", "000099", 
+"0000aa", "0000bb", "0000cc", "0000dd", "0000ee", "0000ff", "1111ff", "2222ff", "3333ff", "4444ff", 
+"5555ff", "6666ff", "7777ff", "8888ff", "9999ff", "aaaaff", "bbbbff", "ccccff", "ddddff", "eeeeff", 
+"ffffff",
+"000000", "001111", "002222", "003333", "004444", "005555", "006666", "007777", "008888", "009999", 
+"00aaaa", "00bbbb", "00cccc", "00dddd", "00eeee", "00ffff", "11ffff", "22ffff", "33ffff", "44ffff", 
+"55ffff", "66ffff", "77ffff", "88ffff", "99ffff", "aaffff", "bbffff", "ccffff", "ddffff", "eeffff", 
+"ffffff",
+"000000", "001100", "002200", "003300", "004400", "005500", "006600", "007700", "008800", "009900", 
+"00aa00", "00bb00", "00cc00", "00dd00", "00ee00", "00ff00", "11ff11", "22ff22", "33ff33", "44ff44", 
+"55ff55", "66ff66", "77ff77", "88ff88", "99ff99", "aaffaa", "bbffbb", "ccffcc", "ddffdd", "eeffee", 
+"ffffff",
+"000000", "111100", "222200", "333300", "444400", "555500", "666600", "777700", "888800", "999900", 
+"aaaa00", "bbbb00", "cccc00", "dddd00", "eeee00", "ffff00", "ffff11", "ffff22", "ffff33", "ffff44", 
+"ffff55", "ffff66", "ffff77", "ffff88", "ffff99", "ffffaa", "ffffbb", "ffffcc", "ffffdd", "ffffee", 
+"ffffff"
+];
+			
+
+			for(let i = 0; i < colors.length; i++){
+				const dom = document.createElement("div");
+				dom.className = "item-color";
+				domColors.appendChild(dom);			
+				dom.style.backgroundColor = '#' + colors[i];
+				dom.setAttribute('data-color', '0x' + colors[i]);
+			}
+				let elem = document.querySelectorAll('.item-color');
+				elem.forEach(function(item){
+				
+				item.addEventListener("click", function() {
+				kuzovMaterial.color.set(parseInt(item.getAttribute('data-color')));				
+				})
+			})
+
+
+				for(let i = 0; i < colors.length; i++){
+				const dom1 = document.createElement("div");
+				dom1.className = "item-color1";
+				domColors1.appendChild(dom1);			
+				dom1.style.backgroundColor = '#' + colors[i];
+				dom1.setAttribute('data-color', '0x' + colors[i]);
+			}
+				let elem1 = document.querySelectorAll('.item-color1');
+				elem1.forEach(function(item){
+				
+				item.addEventListener("click", function() {
+				kuzov2Material.color.set(parseInt(item.getAttribute('data-color')));				
+				})
+			})
+
+				for(let i = 0; i < colors.length; i++){
+				const dom2 = document.createElement("div");
+				dom2.className = "item-color2";
+				domColors2.appendChild(dom2);			
+				dom2.style.backgroundColor = '#' + colors[i];
+				dom2.setAttribute('data-color', '0x' + colors[i]);
+			}
+				let elem2 = document.querySelectorAll('.item-color2');
+				elem2.forEach(function(item){
+				
+				item.addEventListener("click", function() {
+				diskiMaterial.color.set(parseInt(item.getAttribute('data-color')));				
+				})
+			})*/
+			
+
+
+				//GUI 
+/*
+				const gui = new dat.GUI();
+
+				let volgacolor = gui.addFolder('Цвет передней части');
+				let bugatticolor = gui.addFolder('Цвет задней части');
+				
+				volgacolor.closed = false;
+				bugatticolor.closed = false;
+
+				volgacolor.add(meshes[5].material.color, 'r', 0, 1, 0.01).name('красный');
+				volgacolor.add(meshes[5].material.color, 'g', 0, 1, 0.01).name('зелёный');
+				volgacolor.add(meshes[5].material.color, 'b', 0, 1, 0.01).name('синий');
+
+				bugatticolor.add(meshes[0].material.color, 'r', 0, 1, 0.01).name('красный');
+				bugatticolor.add(meshes[0].material.color, 'g', 0, 1, 0.01).name('зелёный');
+				bugatticolor.add(meshes[0].material.color, 'b', 0, 1, 0.01).name('синий');
+*/
+						
+
+				// renderer
+				
+
+				renderer = new THREE.WebGLRenderer( { antialias: true } );
+				renderer.setPixelRatio( window.devicePixelRatio );
+				renderer.setSize( window.innerWidth, window.innerHeight );
+
+				container.appendChild( renderer.domElement );
+
+				renderer.outputEncoding = THREE.sRGBEncoding;
+								
+				let gradus = 45;
+				let radius = 1000;
+				
+				
+				renderer.shadowMap.enabled = true;
+
+				controls = new THREE.OrbitControls( camera, renderer.domElement );
+				controls.target.set( 0, 50, 0 );
+				camera.position.set( radius * Math.sin(gradus * Math.PI / 180),
+									 0,
+									 radius * Math.cos(gradus * Math.PI / 180) );
+				controls.maxPolarAngle = -0.05 + Math.PI / 2;				
+				controls.minDistance = radius;
+				controls.maxDistance = radius;
+				controls.enablePan = false;			
+				window.addEventListener( 'resize', onWindowResize, false );				
+
+
+			}	
+
+			function onWindowResize() {
+
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
+
+				renderer.setSize( window.innerWidth, window.innerHeight );
+
+			}
+
+			function animate() {
+				//controls.autoRotate = true;
+				controls.update();
+				requestAnimationFrame( animate );
+				renderer.render( scene, camera );
+			}
+
+				
+		</script>
+		
+	</body>
+</html>

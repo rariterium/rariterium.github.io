@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>Лаз 695</title>
+		
+		<style>
+			body { 
+					margin: 0;
+					width: 100%;
+					height: 100%;	
+					overflow: hidden;
+				 }
+/*			.color {
+
+			}
+			.redcolor {
+				background: #ff0000;
+				width: 100px;
+				height: 100px;
+				border: 2px solid #ffffff;
+				border-radius: 50px; 
+			}*/
+
+			.color {
+				position: absolute;
+				bottom: 50px;
+				left: 50%;
+				transform: translateX(-50%);
+				z-index: 5;
+			}
+
+			.color__items {
+				display: flex;
+			}
+
+			.color__item {
+			  display: block;
+			  width: 50px;
+			  height: 50px;
+			  border-radius: 100%;
+			  border: 2px solid #fff;
+			  margin: 10px; 
+			  cursor: pointer;
+			}
+
+			#color__item-white {
+				background-color: rgba(255,255,255,.6);
+			}
+
+			#color__item-blue {
+				background-color: rgba(0,0,255,.6);
+			}
+
+			#color__item-red {
+				background-color: rgba(255,0,0,.6);
+			}
+
+			#color__item-green {
+				background-color: rgba(0,255,0,.6);
+			}
+			#color__item-yellow {
+				background-color: rgba(255,255,0,.6);
+			}
+
+
+
+			#preloader {
+				position: fixed;
+				height: 100%;
+				width: 100%;
+				background: #34314c;
+				z-index: 100;
+			}
+			#percentage {
+				position: absolute;
+				top: 50%;
+				transform: translateY(-60%);
+				left: 50%;
+				transform: translateX(-50%);
+				font-size: 25px;
+				color: #fff;
+				font-family: swis721 blkoul bt;
+				font-weight: 700;
+			}
+			.preloader__content {
+				margin: 0 auto;
+				position: relative;
+				top: 50%;
+				transform: translateY(-60%);
+				width: 300px;
+				height: 300px;
+			}
+			.preloader__first,
+			.preloader__second,
+			.preloader__third {
+				position: absolute;
+				width: 100%;
+				height: 100%;
+				border-radius: 50%;
+				animation: 1s linear infinite;
+			}
+			.preloader__first {
+				border-bottom: 3px solid #ff7473;
+				animation-name: first;
+			}
+			.preloader__second {
+				border-right: 3px solid #ffc952;
+				animation-name: second;
+			}
+			.preloader__third {
+				border-top: 3px solid #47b8e0;
+				animation-name: third; 
+			}
+			@keyframes first {
+				0%   { transform: rotateX(35deg) rotateY(-45deg) rotateZ(0deg); }
+				100% { transform: rotateX(35deg) rotateY(-45deg) rotateZ(360deg); }
+			}
+			@keyframes second {
+				0%   { transform: rotateX(50deg) rotateY(10deg) rotateZ(0deg); }
+				100% { transform: rotateX(50deg) rotateY(10deg) rotateZ(360deg); }
+			}
+			@keyframes third {
+				0%   { transform: rotateX(35deg) rotateY(55deg) rotateZ(0deg); }
+				100% { transform: rotateX(35deg) rotateY(55deg) rotateZ(360deg); }
+			}
+
+		</style>
+		
+	</head>
+	<body>
+
+		<script src="./../js_loader_r127/fflate.min.js"></script>
+		<script src="./../js_loader_r127/three.min.js"></script>
+		<script src="./../js_loader_r127/WebGL.js"></script>
+		<script src="./../js_loader_r127/OrbitControls.js"></script>
+		<script src="./../js_loader_r127/FBXLoader.js"></script>
+		<script src="./../js_loader_r127/dat.gui.min.js"></script>
+
+
+		<div id="preloader" class="preloader"> 
+			<div class="preloader__content">
+				<!-- <div id="percentage">0%</div> -->
+				<div class="preloader__first"></div>
+				<div class="preloader__second"></div>
+				<div class="preloader__third"></div>  
+			</div>
+		</div>
+
+		<div id="color" class="color">
+			<div class="color__items">
+				<div class="color__item" id="color__item-red"></div>				
+				<div class="color__item" id="color__item-blue"></div>				
+				<div class="color__item" id="color__item-yellow"></div>
+				<div class="color__item" id="color__item-green"></div>
+				<div class="color__item" id="color__item-white"></div>
+			</div>
+		</div>
+
+		<script>
+			var manager = new THREE.LoadingManager();
+			manager.onLoad = function () {
+
+				let preloader = document.getElementById('preloader');
+					preloader.style.display = 'none';
+
+			};
+				// window.onload = function () {
+					
+				// }
+
+			let camera, scene, renderer;
+			let light, controls;
+			let cubeCamera;
+
+			// texture load
+				const textureLoader = new THREE.TextureLoader(manager);
+				const white = textureLoader.load("./../img/white_resize.jpg");
+				const blue = textureLoader.load("./../img/blue_resize.jpg");
+				const red = textureLoader.load("./../img/red_resize.jpg");
+				const yellow = textureLoader.load("./../img/yellow_resize.jpg");
+				const green = textureLoader.load("./../img/green_resize.jpg");
+
+				white.wrapS = white.wrapT = THREE.RepeatWrapping;
+
+					
+			init();
+			animate();
+
+			function init() {
+
+				container = document.createElement( 'div' );
+				document.body.appendChild( container );
+
+				// scene
+				scene = new THREE.Scene();
+				scene.background = new THREE.Color( 0xcce0ff );//cce0ff
+				scene.fog = new THREE.Fog( 0xcce0ff, 500, 10000 );
+
+				//const textureLoader = new THREE.TextureLoader(manager);
+
+				textureEquirec = textureLoader.load( './../img/street.jpg' );
+				textureEquirec.mapping = THREE.EquirectangularReflectionMapping;
+				textureEquirec.encoding = THREE.sRGBEncoding;
+
+				//scene.background = textureEquirec;
+
+				// camera
+				camera = new THREE.PerspectiveCamera( 30, window.innerWidth / window.innerHeight, 1, 10000 );
+				
+				// lights 
+				scene.add( new THREE.AmbientLight( 0x666666 ) );
+
+				light = new THREE.DirectionalLight( 0xffffff, 1 );
+				light.position.set( 100, 300, 0 );
+				light.position.multiplyScalar( 1.3 );
+				light.castShadow = true;
+				light.shadow.mapSize.width = 2048;
+				light.shadow.mapSize.height = 2048;
+				const d = 700;
+				light.shadow.camera.left = - d;
+				light.shadow.camera.right = d;
+				light.shadow.camera.top = d;
+				light.shadow.camera.bottom = - d;
+				light.shadow.camera.far = 1000;
+				scene.add( light );
+
+				//ground
+				var planeMaterial = new THREE.MeshLambertMaterial({color: 0xaaaaaa});
+				let plane = new THREE.Mesh( new THREE.PlaneGeometry( 20000, 20000 ), planeMaterial );
+				plane.position.y = 0;
+				plane.rotation.x = - Math.PI / 2;
+				plane.receiveShadow = true;
+				scene.add( plane );
+
+				const grid = new THREE.GridHelper( 20000, 200, 0x000000, 0x000000 );
+				grid.material.opacity = 0.2;
+				grid.material.transparent = true;
+				scene.add( grid );
+
+				//model
+				let meshes = [];
+				let fbxLoader = new THREE.FBXLoader(manager);
+				fbxLoader.load('./../fbx/laz_695.fbx', function (object) {
+					//console.log(object);
+					
+					object.traverse( function ( child ) {
+					if ( child instanceof THREE.Mesh )
+						{
+							meshes.push( child );
+							child.receiveShadow = true;
+               				child.castShadow = true;
+						}
+					});	
+
+					console.log(object);
+					let fara_aranjevay = meshes[0];
+					let fara_krasnay = meshes[1];
+					let sideniy = meshes[2];
+					let rezina_kolesa = meshes[3];						
+					let poruchni_metall = meshes[4];
+					let fara_belay = meshes[5];	
+					let kuzov = meshes[6];		
+					let kuzov_cvet = meshes[7];	
+					let glass_fara = meshes[8];
+					let nomer = meshes[9];					
+					let kabina_pol = meshes[10];
+					let abbivka = meshes[11];
+					let kolesa_metall = meshes[12];
+					let glass_prozrachnoe = meshes[13];
+											
+
+					glass_prozrachnoe.castShadow = false;				
+
+					glass_prozrachnoe.material = new THREE.MeshPhysicalMaterial( {
+							color: 0xaaaaaa,
+							envMap: textureEquirec,
+							metalness: 0.15, 
+							roughness: 0.1, 
+							transmission: 0.85, 
+							transparent: true
+						} );
+	
+					glass_fara.material = new THREE.MeshPhysicalMaterial( {
+							color: 0xffffff,
+							envMap: textureEquirec,
+							metalness: 0.15, 
+							roughness: 0.1, 
+							transmission: 0.75, 
+							transparent: true
+						} );
+
+					kabina_pol.material = new THREE.MeshStandardMaterial( {
+						color: 0x222222,
+						envMap: textureEquirec,
+						roughness: 0.8
+					} );
+				
+					poruchni_metall.material = new THREE.MeshPhysicalMaterial( {
+				 			color: 0xcccccc,
+				 			metalness: 0.8,
+				 			roughness: 0.2,
+				 			envMap: textureEquirec,
+				 			transmission: 0.85, 
+							transparent: true
+						} );
+
+					kuzov.material = new THREE.MeshStandardMaterial( {
+				 			color: 0xdddddd,
+				 			metalness: 0,
+				 			roughness: 0.5,
+				 			envMap: textureEquirec,
+						} );				
+
+					nomer.material = new THREE.MeshStandardMaterial( {
+				 			color: 0xffffff,
+				 			roughness: 0.5,
+				 			metalness: 0,
+				 			envMap: textureEquirec,
+						} );
+
+					rezina_kolesa.material = new THREE.MeshStandardMaterial( {
+				 			color: 0x111111,
+				 			envMap: textureEquirec,
+				 			metalness: 0.1,
+				 			roughness: 0.6,
+						} );
+
+					sideniy.material = new THREE.MeshStandardMaterial( {
+				 			color: 0x271D11,
+				 			envMap: textureEquirec,
+				 			roughness: 0.8
+						} );
+
+					kolesa_metall.material = new THREE.MeshPhysicalMaterial( {
+				 			color: 0xcccccc,
+				 			metalness: 0.9,
+				 			roughness: 0.1,
+				 			envMap: textureEquirec,
+						} );
+					
+					abbivka.material = new THREE.MeshStandardMaterial( {
+						color: 0x333333,
+						envMap: textureEquirec,
+						roughness: 0.9
+					} );					
+					
+					fara_aranjevay.material = new THREE.MeshStandardMaterial( {
+						color: 0xff5500,
+						envMap: textureEquirec,
+						roughness: 0.5
+					} );
+
+					fara_krasnay.material = new THREE.MeshStandardMaterial( {
+						color: 0xff0000,
+						envMap: textureEquirec,
+						roughness: 0.5
+					} );
+
+					
+
+					fara_belay.material = new THREE.MeshStandardMaterial( {
+				 			color: 0xffffff,
+				 			metalness: 0.2,
+				 			roughness: 0.8,
+				 			envMap: textureEquirec,
+					} );
+
+				
+					kuzovMaterial = new THREE.MeshPhysicalMaterial( {
+				 			map: red,
+				 			metalness: 0.1,
+				 			roughness: 0.6,
+				 			envMap: textureEquirec
+						} );
+
+					let bgcolorr = document.querySelector('#color__item-white');
+					bgcolorr.addEventListener('click', function(){
+							kuzov_cvet.material.map = (white);	
+					});
+
+					let bgcolorw = document.querySelector('#color__item-blue');
+					bgcolorw.addEventListener('click', function(){					
+							kuzov_cvet.material.map = (blue);	
+					});					
+
+					let bgcolory = document.querySelector('#color__item-red');
+					bgcolory.addEventListener('click', function(){
+							kuzov_cvet.material.map = (red);	
+					});
+
+					let bgcolorg = document.querySelector('#color__item-yellow');
+					bgcolorg.addEventListener('click', function(){
+							kuzov_cvet.material.map = (yellow);	
+					});
+
+					let bgcolorb = document.querySelector('#color__item-green');
+					bgcolorb.addEventListener('click', function(){
+							kuzov_cvet.material.map = (green);	
+					});
+					
+				  kuzov_cvet.material = kuzovMaterial;
+
+
+				  
+					scene.add(kuzov);
+					scene.add(fara_belay);
+					scene.add(nomer);					
+					scene.add(rezina_kolesa);							
+					scene.add(kolesa_metall);					
+					scene.add(kuzov_cvet);
+					scene.add(abbivka);
+					scene.add(glass_prozrachnoe);					
+					scene.add(fara_aranjevay);					
+					scene.add(kabina_pol);					
+					scene.add(sideniy);
+					scene.add(fara_krasnay);
+					scene.add(poruchni_metall);
+					scene.add(glass_fara);
+					
+				});
+
+			
+
+				// renderer
+				
+
+				renderer = new THREE.WebGLRenderer( { antialias: true } );
+				renderer.setPixelRatio( window.devicePixelRatio );
+				renderer.setSize( window.innerWidth, window.innerHeight );
+
+				container.appendChild( renderer.domElement );
+
+				renderer.outputEncoding = THREE.sRGBEncoding;
+								
+				
+				
+				
+				renderer.shadowMap.enabled = true;
+
+				controls = new THREE.OrbitControls( camera, renderer.domElement );
+				controls.target.set( 0, 50, 0 );
+				camera.position.set( 1000, 100, -1000 );
+				controls.maxPolarAngle = -0.05 + Math.PI / 2;
+				//controls.maxAzimuthAngle = 0.05 + Math.PI / 2;
+				controls.minDistance = 1400;
+				controls.maxDistance = 1500;
+				window.addEventListener( 'resize', onWindowResize, false );
+				//scene.add( new THREE.CameraHelper( light.shadow.camera ) );
+
+
+			}	
+
+			function onWindowResize() {
+
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
+
+				renderer.setSize( window.innerWidth, window.innerHeight );
+
+			}
+
+			//
+
+			function animate() {
+				controls.update();
+				requestAnimationFrame( animate );
+				renderer.render( scene, camera );
+
+				
+
+			}
+
+				
+		</script>
+	</body>
+</html>
