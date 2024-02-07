@@ -22,7 +22,7 @@ a {
 p {
 	font-size: 36px;
 	margin: 0;
-
+	padding: 0px; 
 
 }
 
@@ -38,6 +38,15 @@ p {
     background-position: cover;
 	background-repeat: repeat;
 }
+
+.email {
+
+	display: flex;
+	justify-content: center;
+	gap: 0px;
+	padding: 0px 0;
+}
+
 
 .logo {
 	padding-top: 25px; 
@@ -56,12 +65,6 @@ p {
 	cursor: pointer;
 }
 
-.email {
-	display: flex;
-	justify-content: center;
-	gap: 0px;
-	padding: 0px 0;
-}
 
 
 
