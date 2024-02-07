@@ -1,0 +1,72 @@
+*{
+	box-sizing: border-box;
+}
+
+body{ 
+	background-attachment: fixed;
+	background-image: url("./../img/sky.jpeg"); 
+	font-family: "Italianno", italic;
+	font-weight: 500;
+	font-style: normal;
+	text-align: center;
+	color: #f5f5f5;
+}
+
+
+a {
+	color: #f5f5f5;
+	text-decoration: none;
+	font-size: 36px;
+}
+
+p {
+	font-size: 36px;
+	margin: 0;
+	padding: 10px; 
+
+}
+
+
+.container {
+	max-width: 1220px;
+	margin: 0 auto;
+	padding: 0 10px;
+}
+.header {
+
+	background-size: cover;
+    background-position: cover;
+	background-repeat: repeat;
+}
+
+.logo {
+	padding-top: 25px; 
+	font-size: 128px;
+}
+
+.cart-items {
+	display: flex;
+	justify-content: center;
+	gap: 30px;
+	flex-wrap: wrap;
+	font-size: 36px;
+}
+
+.cart-link {
+	cursor: pointer;
+}
+
+.footer {
+	background-color: rgba(0,0,0,0.5);
+	display: flex;
+	justify-content: space-between;
+	gap: 50px;
+	padding: 50px 0;
+}
+
+.footer_item {
+	margin: 0 10px;
+}
+
+
+
