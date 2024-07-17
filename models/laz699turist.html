@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>Лаз 699 turist</title>
+		
+		<style>
+			body { 
+					margin: 0;
+					width: 100%;
+					height: 100%;	
+					overflow: hidden;
+				 }
+
+
+
+
+			#preloader {
+				position: fixed;
+				height: 100%;
+				width: 100%;
+				background: #34314c;
+				z-index: 100;
+			}
+			#percentage {
+				position: absolute;
+				top: 50%;
+				transform: translateY(-60%);
+				left: 50%;
+				transform: translateX(-50%);
+				font-size: 25px;
+				color: #fff;
+				font-family: swis721 blkoul bt;
+				font-weight: 700;
+			}
+			.preloader__content {
+				margin: 0 auto;
+				position: relative;
+				top: 50%;
+				transform: translateY(-60%);
+				width: 300px;
+				height: 300px;
+			}
+			.preloader__first,
+			.preloader__second,
+			.preloader__third {
+				position: absolute;
+				width: 100%;
+				height: 100%;
+				border-radius: 50%;
+				animation: 1s linear infinite;
+			}
+			.preloader__first {
+				border-bottom: 3px solid #ff7473;
+				animation-name: first;
+			}
+			.preloader__second {
+				border-right: 3px solid #ffc952;
+				animation-name: second;
+			}
+			.preloader__third {
+				border-top: 3px solid #47b8e0;
+				animation-name: third; 
+			}
+			@keyframes first {
+				0%   { transform: rotateX(35deg) rotateY(-45deg) rotateZ(0deg); }
+				100% { transform: rotateX(35deg) rotateY(-45deg) rotateZ(360deg); }
+			}
+			@keyframes second {
+				0%   { transform: rotateX(50deg) rotateY(10deg) rotateZ(0deg); }
+				100% { transform: rotateX(50deg) rotateY(10deg) rotateZ(360deg); }
+			}
+			@keyframes third {
+				0%   { transform: rotateX(35deg) rotateY(55deg) rotateZ(0deg); }
+				100% { transform: rotateX(35deg) rotateY(55deg) rotateZ(360deg); }
+			}
+
+		</style>
+		
+	</head>
+	<body>
+
+		<script src="./../js_loader_r127/fflate.min.js"></script>
+		<script src="./../js_loader_r127/three.min.js"></script>
+		<script src="./../js_loader_r127/WebGL.js"></script>
+		<script src="./../js_loader_r127/OrbitControls.js"></script>
+		<script src="./../js_loader_r127/FBXLoader.js"></script>
+		<script src="./../js_loader_r127/dat.gui.min.js"></script>
+
+		<div id="preloader" class="preloader"> 
+			<div class="preloader__content">				
+				<div class="preloader__first"></div>
+				<div class="preloader__second"></div>
+				<div class="preloader__third"></div>  
+			</div>
+		</div>
+		<!--<audio src="./../audio/mix.mp3" autoplay loop></audio>-->
+
+
+
+		<script>
+			var manager = new THREE.LoadingManager();
+			manager.onLoad = function () {
+
+				let preloader = document.getElementById('preloader');
+					preloader.style.display = 'none';
+
+			};
+				
+			let camera, scene, renderer;
+			let light, controls;
+			let cubeCamera;
+
+			// texture load
+				const textureLoader = new THREE.TextureLoader(manager);
+			
+
+				const moskow_logo_laz_color = textureLoader.load("./../img/moskow_logo_laz_color.jpg");
+				const moskow_logo_laz_invert = textureLoader.load("./../img/moskow_logo_laz_invert.jpg");
+				const logo_laz_color = textureLoader.load("./../img/logo_laz_color.jpg");
+				const logo_laz_invert = textureLoader.load("./../img/logo_laz_invert.jpg");
+
+
+			
+
+					
+			init();
+			animate();
+
+			function init() {
+
+				container = document.createElement( 'div' );
+				document.body.appendChild( container );
+
+				// scene
+				scene = new THREE.Scene();
+				scene.background = new THREE.Color( 0xcce0ff );
+				scene.fog = new THREE.Fog( 0xcce0ff, 500, 10000 );
+
+				
+
+				textureEquirec = textureLoader.load( './../img/street.jpg' );
+				textureEquirec.mapping = THREE.EquirectangularReflectionMapping;
+				textureEquirec.encoding = THREE.sRGBEncoding;
+
+				
+
+				// camera
+				camera = new THREE.PerspectiveCamera( 30, window.innerWidth / window.innerHeight, 1, 10000 );
+				
+				// lights 
+				scene.add( new THREE.AmbientLight( 0x666666 ) );
+
+				light = new THREE.DirectionalLight( 0xffffff, 1 );
+				light.position.set( 100, 300, 0 );
+				light.position.multiplyScalar( 1.3 );
+				light.castShadow = true;
+				light.shadow.mapSize.width = 2048;
+				light.shadow.mapSize.height = 2048;
+				const d = 700;
+				light.shadow.camera.left = - d;
+				light.shadow.camera.right = d;
+				light.shadow.camera.top = d;
+				light.shadow.camera.bottom = - d;
+				light.shadow.camera.far = 1000;
+				scene.add( light );
+
+				//ground
+				var planeMaterial = new THREE.MeshLambertMaterial({color: 0xaaaaaa});
+				let plane = new THREE.Mesh( new THREE.PlaneGeometry( 20000, 20000 ), planeMaterial );
+				plane.position.y = 0;
+				plane.rotation.x = - Math.PI / 2;
+				plane.receiveShadow = true;
+				scene.add( plane );
+
+				const grid = new THREE.GridHelper( 20000, 200, 0x000000, 0x000000 );
+				grid.material.opacity = 0.2;
+				grid.material.transparent = true;
+				scene.add( grid );
+
+				//model
+				let meshes = [];
+				let fbxLoader = new THREE.FBXLoader(manager);
+				fbxLoader.load('./../fbx/laz_699_turist.fbx', function (object) {
+				
+					
+					object.traverse( function ( child ) {
+					if ( child instanceof THREE.Mesh )
+						{
+							meshes.push( child );
+							child.receiveShadow = true;
+               				child.castShadow = true;
+						}
+					});	
+					meshes.sort((a, b) => a.name > b.name ? 1 : -1);
+					console.log(meshes);
+
+
+					let laz_01_glass_prozrachnoe = meshes[0];
+					let laz_02_shtora = meshes[1];
+					let laz_03_poruchni	= meshes[2];
+					let laz_04_obbivka = meshes[3];
+					let laz_05_rezina = meshes[4];
+					let laz_06_metall = meshes[5];
+					let laz_07_black = meshes[6];
+					let laz_08_sidenie = meshes[7];
+					let laz_09_belay_fara = meshes[8];
+					let laz_10_orangevay_fara = meshes[9];
+					let laz_11_krasnay_fara = meshes[10];
+					let laz_12_gosnomer = meshes[11];
+					let laz_13_kresla = meshes[12];
+					let laz_14_glass_fara = meshes[13];			
+					let laz_15_moskow = meshes[14];
+					let laz_16_igra = meshes[15];
+					let laz_17_kuzov_white = meshes[16];		
+					let laz_18_kuzov_yellow = meshes[17];
+					let laz_19_kuzov_grey = meshes[18];		
+					let laz_20_yellow_fara = meshes[19];
+					
+					
+				
+					
+
+
+					laz_01_glass_prozrachnoe.castShadow = false;				
+
+					laz_01_glass_prozrachnoe.material = new THREE.MeshPhysicalMaterial( {
+							color: 0xaaaaaa,
+							envMap: textureEquirec,
+							metalness: 0.15, 
+							roughness: 0.1, 
+							transmission: 0.85, 
+							transparent: true
+						} );
+
+					laz_02_shtora.material = new THREE.MeshStandardMaterial( {
+				 			color: 0x55f,
+				 			envMap: textureEquirec,
+				 			roughness: 0.8
+						} );				
+			
+					laz_03_poruchni.material = new THREE.MeshPhysicalMaterial( {
+				 			color: 0xf55,
+				 			metalness: 0.2,
+				 			roughness: 0.8,
+				 			envMap: textureEquirec,
+						} );
+
+					laz_04_obbivka.material = new THREE.MeshStandardMaterial( {
+						color: 0x111111,
+						envMap: textureEquirec,
+						roughness: 0.9
+					} );	
+
+					laz_05_rezina.material = new THREE.MeshStandardMaterial( {
+				 			color: 0x111111,
+				 			envMap: textureEquirec,
+				 			metalness: 0.1,
+				 			roughness: 0.6,
+						} );
+
+					laz_06_metall.material = new THREE.MeshPhysicalMaterial( {
+				 			color: 0xcccccc,
+				 			metalness: 0.9,
+				 			roughness: 0.1,
+				 			envMap: textureEquirec,
+						} );
+					
+					laz_07_black.material = new THREE.MeshStandardMaterial( {
+						color: 0x222222,
+						envMap: textureEquirec,
+						roughness: 0.8
+					} );
+
+					laz_08_sidenie.material = laz_13_kresla.material = new THREE.MeshStandardMaterial( {
+				 			color: 0x00f,
+				 			envMap: textureEquirec,
+				 			roughness: 0.8
+						} );
+
+					laz_09_belay_fara.material = new THREE.MeshStandardMaterial( {
+				 			color: 0xffffff,
+				 			metalness: 0.2,
+				 			roughness: 0.8,
+				 			envMap: textureEquirec,
+					} );
+
+					laz_10_orangevay_fara.material = new THREE.MeshStandardMaterial( {
+						color: 0xff5500,
+						envMap: textureEquirec,
+						roughness: 0.5
+					} );
+
+					laz_11_krasnay_fara.material = new THREE.MeshStandardMaterial( {
+						color: 0xff0000,
+						envMap: textureEquirec,
+						roughness: 0.5
+					} );
+
+					laz_12_gosnomer.material = new THREE.MeshStandardMaterial( {
+				 			color: 0xffffff,
+				 			roughness: 0.5,
+				 			metalness: 0,
+				 			envMap: textureEquirec,
+						} );
+
+					laz_14_glass_fara.material = new THREE.MeshPhysicalMaterial( {
+							color: 0xffffff,
+							envMap: textureEquirec,
+							metalness: 0.15, 
+							roughness: 0.1, 
+							transmission: 0.75, 
+							transparent: true
+						} );
+
+					laz_15_moskow.material = new THREE.MeshStandardMaterial( {
+				 			map: logo_laz_color,
+				 			envMap: textureEquirec,
+				 			metalness: 0.1,
+				 			roughness: 0,
+				 			alphaMap: logo_laz_invert,
+				 			transparent: true
+						} );
+					
+					laz_16_igra.material = new THREE.MeshStandardMaterial( {
+				 			map: moskow_logo_laz_color,
+				 			envMap: textureEquirec,
+				 			roughness: 0.8,
+				 			alphaMap: moskow_logo_laz_invert,
+				 			transparent: true
+						} );					
+
+					laz_17_kuzov_white.material = new THREE.MeshStandardMaterial( {
+				 			color: 0xffffff,
+				 			metalness: 0.1,
+				 			roughness: 0,
+				 			envMap: textureEquirec,
+						} );
+
+					laz_18_kuzov_yellow.material = new THREE.MeshStandardMaterial( {
+				 			color: 0xaa5500,
+				 			metalness: 0.1,
+				 			roughness: 0,
+				 			envMap: textureEquirec,
+						} );
+
+					laz_19_kuzov_grey.material = new THREE.MeshStandardMaterial( {
+				 			color: 0x150707,
+				 			metalness: 0.1,
+				 			roughness: 0,
+				 			envMap: textureEquirec,
+						} );
+
+					laz_20_yellow_fara.material = new THREE.MeshStandardMaterial( {
+				 			color: 0xff8800,
+							envMap: textureEquirec,
+							metalness: 0.15, 
+							roughness: 0.1, 
+							transmission: 0.85, 
+							transparent: true
+						} );
+
+
+
+		
+					for ( let i = 0; i <= meshes.length; i++){
+						scene.add(meshes[i]);
+					}
+
+				});
+
+			
+
+				// renderer
+				
+
+				renderer = new THREE.WebGLRenderer( { antialias: true } );
+				renderer.setPixelRatio( window.devicePixelRatio );
+				renderer.setSize( window.innerWidth, window.innerHeight );
+
+				container.appendChild( renderer.domElement );
+
+				renderer.outputEncoding = THREE.sRGBEncoding;
+								
+				
+				
+				
+				renderer.shadowMap.enabled = true;
+
+				controls = new THREE.OrbitControls( camera, renderer.domElement );
+				controls.target.set( 0, 50, 0 );
+				camera.position.set( 1000, 100, -1000 );
+				controls.maxPolarAngle = -0.05 + Math.PI / 2;				
+				controls.minDistance = 1400;
+				controls.maxDistance = 1500;
+				controls.enablePan = false;
+				//controls.autoRotate = true;
+				window.addEventListener( 'resize', onWindowResize, false );
+	
+
+
+			}	
+
+			function onWindowResize() {
+
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
+
+				renderer.setSize( window.innerWidth, window.innerHeight );
+
+			}
+
+			//
+
+			function animate() {
+				controls.update();
+				requestAnimationFrame( animate );
+				renderer.render( scene, camera );
+
+				
+
+			}
+
+				
+		</script>
+	</body>
+</html>
