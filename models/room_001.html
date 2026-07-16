@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>room</title>
+	
+		<link rel="stylesheet" type="text/css" href="../css/style.css">
+	
+		
+	</head>
+	<body>
+
+		<script src="./../js_loader_r127/fflate.min.js"></script>
+		<script src="./../js_loader_r127/three.min.js"></script>		
+		<script src="./../js_loader_r127/OrbitControls.js"></script>		
+		<script src="./../js_loader_r127/FBXLoader.js"></script>
+		<script src="./../js_loader_r127/dat.gui.min.js"></script>
+
+		<script src="./../js/material.js"></script>
+		
+
+
+		<div id="preloader" class="preloader"> 
+			<div class="preloader__content">				
+				<div class="preloader__first"></div>
+				<div class="preloader__second"></div>
+				<div class="preloader__third"></div>  
+			</div>
+		</div>
+		
+
+		<script>
+			let manager = new THREE.LoadingManager();						
+				manager.onLoad = function () {
+					let preloader = document.getElementById('preloader');
+					preloader.style.display = 'none';
+				};
+				
+
+			let camera, scene, renderer;
+			let light, controls;	
+
+					
+			init();
+			animate();
+
+			function init() {
+
+				container = document.createElement( 'div' );
+				document.body.appendChild( container );
+
+				// scene
+				scene = new THREE.Scene();
+				scene.background = new THREE.Color( 0xcce0ff );
+				//scene.fog = new THREE.Fog( 0xcce0ff, 1000, 4000 );
+
+				const textureLoader = new THREE.TextureLoader(manager);
+
+				textureEquirec = textureLoader.load( './../img/street.jpg' );
+				textureEquirec.mapping = THREE.EquirectangularReflectionMapping;
+				textureEquirec.encoding = THREE.sRGBEncoding;
+
+				// camera
+				camera = new THREE.PerspectiveCamera( 30, window.innerWidth / window.innerHeight, 1, 3000 );
+				
+				// lights 
+				scene.add( new THREE.AmbientLight( 0x666666 ) );
+
+				light = new THREE.DirectionalLight( 0xffffff, 1 );
+				light.position.set( 100, 300, 0 );
+				light.position.multiplyScalar( 1.3 );
+				light.castShadow = true;
+				light.shadow.mapSize.width = 2048;
+				light.shadow.mapSize.height = 2048;
+				const d = 700;
+				light.shadow.camera.left = - d;
+				light.shadow.camera.right = d;
+				light.shadow.camera.top = d;
+				light.shadow.camera.bottom = - d;
+				light.shadow.camera.far = 1000;
+				scene.add( light );
+
+				//ground
+				//let planeMaterial = new THREE.MeshLambertMaterial({color: 0xaaaaaa});
+				let plane = new THREE.Mesh( new THREE.PlaneGeometry( 20000, 20000 ), planeMaterial );
+				plane.position.y = -5;
+				plane.rotation.x = - Math.PI / 2;
+				plane.receiveShadow = true;
+				scene.add( plane );
+
+				
+				const grid = new THREE.GridHelper( 20000, 200, 0x000000, 0x000000 );
+				grid.position.y = -5;
+				grid.material.opacity = 0.2;
+				grid.material.transparent = true;
+				scene.add( grid );
+
+
+				
+				//model
+				let meshes = [];
+				let fbxLoader = new THREE.FBXLoader(manager);
+				fbxLoader.load('./../fbx/room_004.fbx', function (object) {
+					
+					object.traverse( function ( child ) {
+					if ( child instanceof THREE.Mesh )
+						{
+							meshes.push( child );
+							/*child.receiveShadow = true;
+               				child.castShadow = true;*/
+						}
+					});	
+
+					meshes.sort((a, b) => a.name > b.name ? 1 : -1);
+					console.log(meshes);
+
+					
+
+
+/*
+
+					meshes[11].material = metallMaterial;
+					meshes[9].material = windowsMaterial;	
+					meshes[4].material = rezinaMaterial;
+					meshes[10].material = fara_krasnayMaterial;
+					meshes[5].material = kuzovMaterial;
+					meshes[0].material = kuzov2Material;
+					meshes[7].material = fara_perednayMaterial;
+					meshes[6].material = tormozaMaterial;
+					meshes[1].material = zerkaloMaterial;
+					meshes[8].material = bakyMaterial;
+					meshes[2].material = plastikMaterial;
+					meshes[3].material = diskiMaterial;					
+					
+					*/
+					//ADD SCENE
+
+					for ( let i = 0; i <= meshes.length; i++){
+						scene.add(meshes[i]);
+					}
+
+					//meshes[0].rotation.x = 0.1;	
+				//GUI 
+
+				const gui = new dat.GUI();
+
+				let zal = gui.addFolder('Зал');
+					let zalShkaf = zal.addFolder('Шкефы');
+					let zalKrovat = zal.addFolder('Кровать');
+					let zalDver = zal.addFolder('Дверь');
+				let komnata = gui.addFolder('Комната');	
+					let komnataShkaf = komnata.addFolder('Шкефы');
+					let komnataKrovat = komnata.addFolder('Диван');
+					let komnataDver = komnata.addFolder('Дверь');
+					let komnataStol = komnata.addFolder('Стол');					
+				let hol = gui.addFolder('Хол');
+				
+				
+				zal.closed = true;	
+					zalShkaf.closed = false;
+					zalKrovat.closed = false;
+					zalDver.closed = false;			
+				komnata.closed = true;
+					komnataShkaf.closed = false;	
+					komnataKrovat.closed = false;	
+					komnataDver.closed = false;		
+					komnataStol.closed = false;	
+				hol.closed = true;
+
+
+				zalDver.add(meshes[5].rotation, 'z', 0, 2.70, 0.01).name('дверь в комнату');
+				zalDver.add(meshes[8].rotation, 'z', -2.70, 0, 0.01).name('дверь в комнату');
+
+				zalKrovat.add(meshes[10].rotation, 'z', 0, 4.71, 1.57).name('поворот');
+				zalKrovat.add(meshes[10].position, 'x', -155, 130, 0.001).name('по ширине');
+				zalKrovat.add(meshes[10].position, 'z', -550, 10, 0.001).name('по длине');
+
+				zalShkaf.add(meshes[11].rotation, 'z', 0, 4.71, 1.57).name('поворот');
+				zalShkaf.add(meshes[11].position, 'x', -155, 130, 0.001).name('по ширине');
+				zalShkaf.add(meshes[11].position, 'z', -550, 10, 0.001).name('по длине');
+
+				zalShkaf.add(meshes[12].rotation, 'z', 0, 4.71, 1.57).name('поворот');
+				zalShkaf.add(meshes[12].position, 'x', -155, 130, 0.001).name('по ширине');
+				zalShkaf.add(meshes[12].position, 'z', -550, 10, 0.001).name('по длине');
+
+				zalShkaf.add(meshes[13].rotation, 'z', 0, 4.71, 1.57).name('поворот');
+				zalShkaf.add(meshes[13].position, 'x', -155, 130, 0.001).name('по ширине');
+				zalShkaf.add(meshes[13].position, 'z', -550, 10, 0.001).name('по длине');
+
+				zalShkaf.add(meshes[9].rotation, 'z', 0, 4.71, 1.57).name('поворот');
+				zalShkaf.add(meshes[9].position, 'x', -90, 65, 0.001).name('по ширине');
+				zalShkaf.add(meshes[9].position, 'z', -470, -60, 0.001).name('по длине');	
+				
+
+				hol.add(meshes[0].rotation, 'z', -1.60, 0, 0.01).name('дверь в комнату');
+				hol.add(meshes[2].rotation, 'z', -1.99, 0, 0.01).name('дверь в кладовку');
+				hol.add(meshes[3].rotation, 'z', 0, 2.70, 0.01).name('дверь в ванну');
+				hol.add(meshes[4].rotation, 'z', 0, 1.75, 0.01).name('дверь в туалет');
+				hol.add(meshes[6].rotation, 'z', -1.70, 0, 0.01).name('дверь в коридор');
+				hol.add(meshes[7].rotation, 'z', -1.50, 0, 0.01).name('дверь в кухню');
+				
+			
+				
+				komnataDver.add(meshes[1].rotation, 'z', 0, 1.60, 0.01).name('дверь в комнату');
+
+				komnataKrovat.add(meshes[15].rotation, 'z', 0, 4.71, 1.57).name('поворот');
+				komnataKrovat.add(meshes[15].position, 'x', 190, 480, 0.001).name('по ширине');
+				komnataKrovat.add(meshes[15].position, 'z', 170, 650, 0.001).name('по длине');
+				
+				komnataShkaf.add(meshes[14].rotation, 'z', 0, 4.71, 1.57).name('поворот');
+				komnataShkaf.add(meshes[14].position, 'x', 210, 430, 0.001).name('по ширине');
+				komnataShkaf.add(meshes[14].position, 'z', 180, 650, 0.001).name('по длине');
+
+				komnataStol.add(meshes[16].rotation, 'z', 0, 4.71, 1.57).name('поворот');
+				komnataStol.add(meshes[16].position, 'x', 190, 580, 0.001).name('по ширине');
+				komnataStol.add(meshes[16].position, 'z', 170, 650, 0.001).name('по длине');
+
+				});
+				
+
+				// renderer
+				
+
+				renderer = new THREE.WebGLRenderer( { antialias: true } );
+				renderer.setPixelRatio( window.devicePixelRatio );
+				renderer.setSize( window.innerWidth, window.innerHeight );
+
+				container.appendChild( renderer.domElement );
+
+				renderer.outputEncoding = THREE.sRGBEncoding;
+								
+				let gradus = 45;
+				let radius = 2000;
+				
+				
+				renderer.shadowMap.enabled = true;
+
+				controls = new THREE.OrbitControls( camera, renderer.domElement );
+				controls.target.set( 0, 100, 0 );
+				/*camera.position.set( radius * Math.sin(gradus * Math.PI / 180),
+									 0,
+									 radius * Math.cos(gradus * Math.PI / 180) );*/
+
+				camera.position.set( radius * Math.sin(gradus * Math.PI / 180),
+									 0,
+									 radius * Math.cos(gradus * Math.PI / 180) );
+				controls.maxPolarAngle = -0.05 + Math.PI / 2;				
+				controls.minDistance = 100;
+				controls.maxDistance = 2000;
+				controls.enablePan = true;			
+				window.addEventListener( 'resize', onWindowResize, false );				
+
+
+			}	
+
+			function onWindowResize() {
+
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
+
+				renderer.setSize( window.innerWidth, window.innerHeight );
+
+			}
+
+			function animate() {
+				//controls.autoRotate = true;
+				controls.update();
+				requestAnimationFrame( animate );
+				renderer.render( scene, camera );
+			}
+
+				
+		</script>
+	</body>
+</html>
